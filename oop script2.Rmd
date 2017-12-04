@@ -1,0 +1,127 @@
+---
+title: "Comparing S3 and S4 OOP frameworks"
+author: "Heather Robinson"
+date: "4 December 2017"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=TRUE,eval=TRUE}
+```
+
+## S3 framework
+
+Centres on renaming processes.
+We routinely create S3 objects when switching classes with the 'as.' command
+
+```{r eval=TRUE}
+a<-c(1:5)
+as.factor(a)
+as.numeric(a) 
+```
+
+We can create a number of new classes that we will treat differently later in our code
+
+```{r eval=TRUE}
+a<-c(1:5)
+class(a)
+class(a)<-"numberlist"
+class(a)
+
+class(a)<-"numeric"
+class(a) <- append(class(a),"numberlist")
+class(a)
+
+```
+
+The original class can be kept or overwritten. If it is kept then the object now belongs to 2 classes simultaneously.
+
+In S3 frameworks, classes are organised in a hierachy (see powerpoint). 
+
+A generic linking function decides which function to call based on the class type.
+
+When this generic function is called, R cycles through each of the associated classes until it gets to one with an associated function call, or if it finds none, will return an error.
+
+
+
+```{r eval=TRUE}
+do_thing<-function(x){
+  UseMethod("do_thing",x)}
+do_thing.numberlist<-function(x){
+print("you entered a numeric list")
+return(x)}
+
+do_thing(a)
+```
+Typing do_thing(a) will prompt R to initially try to run 'do_thing.numberlist'. 
+
+If numberlist methods had not been defined, R would try to run 'do_thing.numeric'. 
+
+It would then resort to using 'do_thing.default' if instructions were not available, and finally showing an error if this wasn't present.
+
+Falling back on a default method would be suitable for commands like plot, but not necessarily for calculations.
+
+S3 generic and class statements are typically structured generic.method, including familiar uses such as read.table or read.csv 
+
+The advantage of S3 is that it can provide flexibility for the user.
+
+A drawback of S3 codes is that they rely on the user accurately assigning classes, because the code doesn't break or give an error if the wrong type of data is entered.
+
+```{r eval=TRUE}
+y<-c("A","B","C")
+as.factor(y)
+as.numeric(y) 
+summary(y)
+```
+
+
+## S4 framework
+
+S4 notation is more formal and there is less scope for users to make errors.
+It uses the setClass command. 
+This example shows creating a class called FirstQuadrant for coordinates in the top right quadrant of a map:
+
+```{r eval=FALSE}
+FirstQuadrant <- setClass("FirstQuadrant",
+       slots = c(x = "numeric",y = "numeric"),
+        prototype=list(x = 0.0,y = 0.0),
+       validity=function(object)
+        {if((object@x < 0) || (object@y < 0)) {
+                        return("A negative number was given.")}
+                return(TRUE)
+        }
+        )
+```
+There are commands to set slots- there are 2 pieces of information for each coordinate.
+Prototype sets default values
+Validity outlines which values are acceptable
+
+
+As well as the S3 frameworks allowing inheritance, this can be specified for S4 via the ‘contains’ command. Otherwise, S4 classes are independently set. 
+
+There is no cycling through generics, the generic is defined by the object and a method is tied to it:
+
+```{r eval=FALSE}
+setGeneric(name="setCoordinate",
+                       def=function(theObject,xVal,yVal)
+                       {standardGeneric("setCoordinate")})
+
+setMethod(f="setCoordinate",
+                      signature="FirstQuadrant",
+                      definition=function(theObject,xVal,yVal)
+                      {theObject@x <- xVal
+                       theObject@y <- yVal
+                       return(theObject)})
+```
+
+Above we create a method, setCoordinate, to overwrite the coordinates held in an object:
+
+z <- setCoordinate(z,-3.0,-5.0)    
+
+Many methods can be associated with different objects. Each time we need to specify a generic and a method. We can have a long list of generics and methods.
+
+If any of the assumptions aren't met, this leads to an error message and the code will not run.
+The emphasis is then on the user to fix any issues in the input, not for the code itself to do the troubleshooting.
+S4 is less permissive but also less user friendly.
+
