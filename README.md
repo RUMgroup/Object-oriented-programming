@@ -1,2 +1,2 @@
 # Object-oriented-programming
-From talk given 04/12/17
+An introduction to basic principles of object oriented programming
